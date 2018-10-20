@@ -1,0 +1,90 @@
+ДБА ДЗ5
+Запросы
+////////////
+БД MySQL
+------------------------------
+1. Запрос, который выберет категории и среднюю цену товаров в каждой категории, при условии,
+что эта средняя цена менее 1000 рублей (выбираем "бюджетные" категории товаров)
+
+SELECT `categories`.*, AVG(`products`.`price`) AS `avg_price`
+FROM `categories`
+  LEFT JOIN `products` ON `categories`.`id` = `products`.`category_id`
+GROUP BY `categories`.`id`
+HAVING `avg_price` < 1000;
+
+2. Улучшите предыдущий запрос таким образом, чтобы в расчет средней цены включались только товары, имеющиеся на складе.
+
+SELECT `categories`.*, AVG(IF(`products`.`amount` > 0, `products`.`price`, NULL)) AS `avg_price`
+FROM `categories`
+  LEFT JOIN `products` ON `categories`.`id` = `products`.`category_id`
+GROUP BY `categories`.`id`
+HAVING `avg_price` < 1000;
+
+3. Добавьте к таблице брендов класс бренда (A, B, C). Например, A - Apple, B - Samsung, C - Xiaomi.
+
+ALTER TABLE `brands` ADD `class` CHAR(1) NOT NULL;
+
+Заполняем поле класс в таблице брендов:
+
+UPDATE `brands` SET `class` = 'A' WHERE `name` = 'Apple';
+UPDATE `brands` SET `class` = 'B' WHERE `name` = 'Samsung';
+UPDATE `brands` SET `class` = 'C' WHERE `name` = 'Xiaomi';
+UPDATE `brands` SET `class` = 'D' WHERE `name` = 'Adidas';
+UPDATE `brands` SET `class` = 'E' WHERE `name` = 'Puma';
+UPDATE `brands` SET `class` = 'F' WHERE `name` = 'Bosh';
+UPDATE `brands` SET `class` = 'G' WHERE `name` = 'Nokia';
+UPDATE `brands` SET `class` = 'H' WHERE `name` = 'Askona';
+UPDATE `brands` SET `class` = 'I' WHERE `name` = 'Ikea';
+UPDATE `brands` SET `class` = 'J' WHERE `name` = 'Aquaton';
+
+Добавьте к своей базе данных таблицу заказов. Простейший вариант - номер заказа, дата и время, ID товара.
+
+CREATE TABLE `orders` (
+  `id` SERIAL,
+  `number` INT NOT NULL,
+  `date_time` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  `product_id` BIGINT(20) NOT NULL,
+  PRIMARY KEY (`id`)
+);
+
+Добавляем данные в таблицу заказов
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (10, 2, '2018-10-20');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (11, 5, '2018-10-10 12:10:05');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (12, 10, '2018-10-11 11:15:15');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (13, 15, '2018-10-14 10:25:15');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (14, 16, '2018-10-17 09:43:11');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (15, 53, '2018-10-17 09:45:12');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (16, 103, '2018-10-18 08:44:12');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (17, 104, '2018-10-18 12:47:12');
+INSERT INTO `orders` (`number`, `product_id`, `date_time`) VALUES (18, 110, '2018-10-14 08:24:17');
+
+3. Напишите запрос, который для каждой категории и класса брендов, представленных в категории выберет среднюю цену товаров.
+
+SELECT `categories`.*, `brands`.`class`, AVG(`products`.`price`) AS `avg_price`
+FROM `categories`
+  LEFT JOIN `products` ON `products`.`category_id` = `categories`.`id`
+  LEFT JOIN `brands` ON `products`.`brand_id` = `brands`.`id`
+GROUP BY `categories`.`id`, `brands`.`class`;
+
+Напишите запрос, который выведет таблицу с полями "дата", "число заказов за дату", "сумма заказов за дату".
+
+SELECT DATE(`orders`.`date_time`) AS `order_date`, COUNT(`orders`.`number`) AS `amount_of_orders_by_date`, SUM(`products`.`price`) AS `sum_price`
+FROM `orders`
+  LEFT JOIN `products` ON `orders`.`product_id` = `products`.`id`
+GROUP BY `order_date`;
+
+* Улучшите этот запрос, введя группировку по признаку "дешевый товар", "средняя цена", "дорогой товар".
+Критерии отнесения товара к той или иной группе определите самостоятельно.
+В итоге должно получиться "дата", "группа по цене", "число заказов", "сумма заказов"
+
+SELECT
+  DATE(`orders`.`date_time`) AS `order_date`,
+  COUNT(`orders`.`number`) AS `amount_of_orders_by_date`,
+  SUM(`products`.`price`) AS `sum_price`,
+  MAX(`products`.`price`) AS `max_price`,
+  AVG(`products`.`price`) AS `avg_price`,
+  MIN(`products`.`price`) AS `min_price`
+FROM `orders`
+  LEFT JOIN `products` ON `orders`.`product_id` = `products`.`id`
+GROUP BY `order_date`;
+
